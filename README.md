@@ -122,7 +122,8 @@ SMTP_PASSWORD=邮箱SMTP授权码
 SMTP_FROM=admin@example.com
 COOKIE_ADMIN_PASSWORD=设置一个Cookie管理密码
 APIKEY_ADMIN_PAGE_PASSWORD=设置一个APIKey管理页面密码
-HOME_PAGE_PASSWORD=设置一个文档首页访问密码
+HOME_PAGE_PASSWORD=留空或填写 your_home_page_password 表示不启用首页密码
+OPENAPI_DOC_SYNC_ENABLED=0
 ```
 
 保存后，确认 `.env` 和 `douyin-api-lite-secure` 在同一个目录。
@@ -300,7 +301,10 @@ https://你的域名/
 | `SMTP_FROM` | 邮件功能必填 | 发件人邮箱。 |
 | `COOKIE_ADMIN_PASSWORD` | 建议填写 | Cookie 管理入口密码。 |
 | `APIKEY_ADMIN_PAGE_PASSWORD` | 建议填写 | APIKey 管理中心页面密码。 |
-| `HOME_PAGE_PASSWORD` | 建议填写 | 文档首页访问密码。为空则首页不需要二级密码。 |
+| `HOME_PAGE_PASSWORD` | 建议填写 | 文档首页访问密码。留空或保持默认值则不启用。 |
+| `APIKEY_APPLY_ONCE_PER_EMAIL` | 否 | 是否限制每个 QQ 邮箱只能领取一次 APIKey。默认开启。 |
+| `OPENAPI_DOC_SYNC_ENABLED` | 否 | 是否让 `/openapi.json` 和 Swagger 文档 `servers` 内容按当前访问地址动态同步。默认关闭。 |
+| `JOB_WORKER_COUNT` | 否 | 异步任务 worker 数量。默认 `1`。 |
 
 ## 九、MySQL 配置示例
 
@@ -326,19 +330,19 @@ MYSQL_DSN=douyin_user:douyin_password@tcp(127.0.0.1:3306)/douyin_db?charset=utf8
 
 ## 十、APIKey 获取说明
 
-普通用户获取 APIKey 的方式：
+程序内置 APIKey 的获取方式：
 
-1. 访问 <https://km.9107788.xkm/>
-2. 点击“使用 QQ 登录并领取卡密”
-3. 获取卡密后，在调用接口时传入 `apikey` 参数
-
-如果你启用了程序内置的 APIKey 领取页面，也可以访问：
+1. 访问程序内置领取页：
 
 ```text
 https://你的域名/apikey_apply
 ```
 
-填写 QQ 邮箱后，系统会分配 APIKey 并通过邮件发送。
+2. 在页面里填写 QQ 邮箱
+3. 系统会自动分配程序内的 APIKey，并通过邮件发送
+4. 获取到的 APIKey 在调用接口时传入 `apikey` 参数
+
+如果开启了按邮箱限领，默认同一个 QQ 邮箱只能领取一次。页面本身就是“领取密钥”入口，不是错误页。
 
 ## 十一、常用接口入口
 
@@ -347,6 +351,7 @@ https://你的域名/apikey_apply
 | 功能 | 路径 | 说明 |
 | --- | --- | --- |
 | OpenAPI 文档 | `/` | 在线接口文档。 |
+| OpenAPI JSON | `/openapi.json` | 接口文档原始 JSON。 |
 | 抖音解析 | `/api` | 抖音作品解析入口。 |
 | 作品详情 | `/detail` | 获取单个作品详情。 |
 | 评论接口 | `/comment` | 获取作品评论。 |
@@ -357,7 +362,21 @@ https://你的域名/apikey_apply
 | APIKey 管理页面 | `/apikey_admin.html` | APIKey 管理中心页面。 |
 | APIKey 获取页面 | `/apikey_apply` | 用户自助领取 APIKey 页面。 |
 
-## 十二、常见问题
+## 十二、OpenAPI 文档同步开关
+
+默认情况下，`/openapi.json` 和 Swagger 页面里的文档内容是静态模式，不会根据访问域名自动同步服务器地址。
+
+如果你希望让文档内容自动跟随当前访问域名，请把 `.env` 里的 `OPENAPI_DOC_SYNC_ENABLED` 设置为 `1`：
+
+```env
+OPENAPI_DOC_SYNC_ENABLED=1
+```
+
+开启后，`/openapi.json` 里的 `servers` 会按当前请求的协议和域名动态输出，Swagger 页面也会同步展示对应地址。
+
+修改这个配置后，需要重启程序才会生效。
+
+## 十三、常见问题
 
 ### 1. 启动提示未配置 BOOTSTRAP_APIKEY
 
@@ -377,11 +396,7 @@ BOOTSTRAP_APIKEY=你的卡密
 APIKEY_ADMIN_PAGE_PASSWORD=你的管理页密码
 ```
 
-访问时需要带上密码：
-
-```text
-https://你的域名/apikey_admin.html?password=你的管理页密码
-```
+打开 `/apikey_admin.html` 后直接输入密码即可进入，不需要再拼接查询参数。
 
 ### 3. 获取 APIKey 邮件发送失败
 
@@ -416,7 +431,13 @@ SMTP_FROM=admin@example.com
 - 建议开启宝塔防火墙或 Nginx 限流
 - 建议定期备份数据库
 
-## 十四、免责声明
+## 十四、许可证
+
+本程序使用专有软件许可。允许用户在授权范围内部署和使用，但禁止反编译、破解、转售、二次分发和未授权商用。
+
+详细条款请查看 [LICENSE](LICENSE)。
+
+## 十五、免责声明
 
 本程序仅供学习、研究和合法接口集成使用。请遵守目标平台服务条款、当地法律法规以及数据合规要求。因不当使用造成的任何风险和后果由使用者自行承担。
 
